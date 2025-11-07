@@ -12,17 +12,28 @@ export function CaseStudies() {
 
   useEffect(() => {
     async function fetchCases() {
-      const { data, error } = await supabase
-        .from('case_studies')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching case studies:', error);
-      } else {
-        setCases(data || []);
+      if (!supabase) {
+        console.warn('Supabase not configured. Case studies will not be loaded.');
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const { data, error } = await supabase
+          .from('case_studies')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching case studies:', error);
+        } else {
+          setCases(data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching case studies:', err);
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchCases();
@@ -54,7 +65,12 @@ export function CaseStudies() {
         </div>
 
         <div className="space-y-4">
-          {cases.map((caseStudy) => {
+          {cases.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">Case studies will be displayed here once configured.</p>
+            </div>
+          ) : (
+            cases.map((caseStudy) => {
             const title = caseStudy[`title_${language}` as keyof CaseStudy] as string;
             const description = caseStudy[`description_${language}` as keyof CaseStudy] as string;
             const challenge = caseStudy[`challenge_${language}` as keyof CaseStudy] as string;
@@ -115,7 +131,7 @@ export function CaseStudies() {
                 )}
               </div>
             );
-          })}
+          }))}
         </div>
       </div>
     </section>

@@ -13,17 +13,28 @@ export function Services() {
 
   useEffect(() => {
     async function fetchServices() {
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .order('order');
-
-      if (error) {
-        console.error('Error fetching services:', error);
-      } else {
-        setServices(data || []);
+      if (!supabase) {
+        console.warn('Supabase not configured. Services will not be loaded.');
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .order('order');
+
+        if (error) {
+          console.error('Error fetching services:', error);
+        } else {
+          setServices(data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching services:', err);
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchServices();
@@ -60,7 +71,12 @@ export function Services() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((service) => {
+          {services.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-500 text-lg">Services will be displayed here once configured.</p>
+            </div>
+          ) : (
+            services.map((service) => {
             const name = service[`name_${language}` as keyof Service] as string;
             const description = service[`description_${language}` as keyof Service] as string;
             const features = service[`features_${language}` as keyof Service] as string[];
@@ -98,7 +114,7 @@ export function Services() {
                 </ul>
               </div>
             );
-          })}
+          }))}
         </div>
       </div>
     </section>
